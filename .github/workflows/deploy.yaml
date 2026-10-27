@@ -1,5 +1,5 @@
 # Builds main and publishes it to the root of the gh-pages branch, which GitHub Pages serves.
-# PR previews live under pr-preview/ on the same branch (see preview.yml), so this deploy must
+# PR previews live under pr-preview/ on the same branch (see preview.yaml), so this deploy must
 # leave that folder alone.
 #
 # The hourly schedule is a safety net: a merge made with the workflow token (e.g. if auto-merge

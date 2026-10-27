@@ -21,11 +21,34 @@ template and has no app yet. The first PR should:
    (`https://<owner>.github.io/<repo>/`), how to install it to the home screen, how to run and
    test it locally, and the stack. Link to `.github/setup/README.md` for the PR and deploy
    pipeline instead of repeating it. Remove the `TEMPLATE-README` comment.
-4. **Uncomment the dependency block** in `.github/dependabot.yml` (`npm` also covers pnpm and
+4. **Uncomment the dependency block** in `.github/dependabot.yaml` (`npm` also covers pnpm and
    Yarn; use `bun` for Bun).
 
 If anything about the app itself is unclear (what it does, who it's for, the main screens), ask
 before scaffolding rather than guessing.
+
+## Creating a new app repo
+
+When asked to start a new app, create its repo through the **Repo setup** workflow in the
+template repo, `agallant/claude-coderabbit-pwa-template` (also linked from
+`.github/setup/README.md`). Cloud sessions can't change repo settings themselves, and the user
+shouldn't have to run anything locally.
+
+1. Settle the repo name: short, lowercase, hyphenated. If the user didn't give one, propose one
+   and confirm it before creating anything.
+2. Open an issue in the template repo titled `Set up <owner>/<name>`. Make the body's first line a
+   one-line description of the app. Add a line `visibility: private` only if the user asked for a
+   private repo.
+   `gh issue create --repo agallant/claude-coderabbit-pwa-template --title "Set up <owner>/<name>" --body "<description>"`
+3. Wait for the workflow's comment on the issue, usually within a minute
+   (`gh issue view <number> --repo agallant/claude-coderabbit-pwa-template --comments`). A
+   successful run closes the issue. If it failed, pass on the error. A missing or expired
+   `SETUP_TOKEN` is the usual cause, and the guide explains the fix.
+4. Ask the user to add the new repo to the Claude GitHub App
+   (github.com/settings/installations → Claude → Configure → Repository access), the one step
+   GitHub only allows in a browser. Once they confirm, attach the repo and bootstrap it as above.
+
+Never ask the user for a token or to paste credentials; the workflow holds the only one.
 
 ## How changes land
 

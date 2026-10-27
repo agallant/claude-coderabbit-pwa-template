@@ -5,51 +5,84 @@ Claude opens PRs; CodeRabbit, CodeQL and CI review them; a PR merges by itself o
 passes; `main` deploys to GitHub Pages. This page explains the setup and how each part works.
 It stays accurate for the life of the repo, so the root README doesn't need to repeat it.
 
-## One-time setup for a new repo
+## Setting up repos
 
-A template copies files only. GitHub App access, rulesets and repo settings don't come along, so
-each new repo needs these steps (about five minutes).
+A template copies files only. Repo settings, rulesets and GitHub App access don't come along, so
+every new repo needs configuring. The **Repo setup** workflow
+([`repo-setup.yaml`](../workflows/repo-setup.yaml)), running in the template repo, does that: it
+creates the repo from the template and runs [`setup-repo.sh`](setup-repo.sh) on it. It needs a
+token you create once. Claude can't apply these settings from a cloud session itself, since
+those sessions aren't allowed to change repo settings, rulesets or Pages.
 
-1. **Create the repo** from the template: *Use this template → Create a new repository*. Make it
-   **public** unless you pay for GitHub Code Security and Pages on private repos: CodeQL, secret
-   scanning, dependency review and Pages are free only on public repos.
-2. **Give CodeRabbit access** to the new repo. CodeRabbit is the reviewer whose approval every PR
-   needs, so nothing merges until this is done.
-   - Already installed (you use it on other repos): open
-     [github.com/settings/installations](https://github.com/settings/installations) → **CodeRabbit**
-     → **Configure** → *Repository access* → **Select repositories** → add the new repo → **Save**.
-   - Not installed yet: [github.com/apps/coderabbitai](https://github.com/apps/coderabbitai) →
-     **Install** → choose *Only select repositories* → pick the repo.
-3. **Give Claude access** the same way: [github.com/settings/installations](https://github.com/settings/installations)
-   → **Claude** → **Configure** → *Repository access* → add the repo. (Not installed yet:
-   [github.com/apps/claude](https://github.com/apps/claude) → **Install** → *Only select repositories*.)
-   This lets cloud sessions at [claude.ai/code](https://claude.ai/code) clone, push and open PRs,
-   and enables *Auto-fix*, where Claude watches a PR and fixes failing checks or review comments.
-4. **Run the setup script** from a clone, with the [GitHub CLI](https://cli.github.com) logged in
-   as a repo admin and [jq](https://jqlang.org/download/) installed:
+### Once, in the template repo (about five minutes)
 
-   ```sh
-   .github/setup/setup-repo.sh            # or: .github/setup/setup-repo.sh owner/name
-   ```
+1. **Mark it as a template**: *Settings → General → Template repository*.
+2. **Create the setup token**. This
+   [prefilled link](https://github.com/settings/personal-access-tokens/new?name=Repo+setup+%28PWA+template%29&description=Used+only+by+the+Repo+setup+workflow+in+the+PWA+template+repo,+to+create+and+configure+app+repos.&expires_in=366&administration=write&contents=write&issues=write&pages=write&actions_variables=write&repository_creation=write)
+   fills in the name, a 1-year expiry and the permissions. Under *Repository access*, choose
+   **All repositories** (the repos it will set up don't exist yet), then **Generate token** and
+   copy it.
+   - The permissions, if you'd rather fill the form in by hand: Administration, Contents, Issues,
+     Pages, Variables and Repository creation, each *Read and write*.
+3. **Store the token**: template repo → *Settings → Environments → New environment* named
+   `repo-setup`. Under *Deployment branches and tags*, choose **Selected branches and tags** and
+   add `main`. Then *Add environment secret*: name `SETUP_TOKEN`, value the token.
+4. **Install the apps.**
+   - [CodeRabbit](https://github.com/apps/coderabbitai): choose **All repositories** so new repos
+     are covered automatically. It reads code and comments on PRs, so broad access is a
+     reasonable trade.
+   - [Claude](https://github.com/apps/claude): keep **Only select repositories** and include the
+     template repo. You'll add each new app repo here (see below).
+5. **Optional: gate the template too.** Open an issue in the template repo titled
+   `Set up agallant/claude-coderabbit-pwa-template`. That applies the same ruleset, so changes to
+   the template (and to the workflow that holds the token) also need CodeRabbit's approval.
 
-   It sets squash-only auto-merge, creates the `main` ruleset, turns on Dependabot alerts and
-   security updates and secret scanning with push protection, creates the `gh-pages` branch and
-   points GitHub Pages at it. Safe to re-run any time (for example after editing the ruleset).
-5. **Start building**: in [claude.ai/code](https://claude.ai/code), pick the repo and describe the
-   app. `CLAUDE.md` tells Claude how to bootstrap it (pick a stack, scaffold, rewrite the README).
+### For each new app
 
-### Does connecting the template repo carry over?
+1. **Ask Claude** (in a session with the template repo) to start a new app, for example
+   *"Create agallant/space-dodge: a one-thumb arcade game for phones"*. Claude opens an issue in
+   the template repo titled `Set up agallant/space-dodge` with the description as its body. The
+   workflow creates the repo, applies the settings, comments the result and closes the issue.
+   - Without Claude: open that issue yourself (add a line `visibility: private` for a private
+     repo), or run *Actions → Repo setup → Run workflow*.
+   - Public is the default and the simplest choice. CodeQL, secret scanning, dependency review
+     and Pages are free only on public repos.
+2. **Add the repo to the Claude app**, the one step GitHub only allows in a browser:
+   [github.com/settings/installations](https://github.com/settings/installations) → **Claude** →
+   **Configure** → *Repository access* → add the repo → **Save**.
+3. **Start building**: open a session on the new repo at [claude.ai/code](https://claude.ai/code)
+   and describe the app. `CLAUDE.md` tells Claude how to bootstrap it.
 
-No. GitHub App access is per repository, and a template copies files, nothing else. Connecting
-CodeRabbit or Claude to the *template* only matters for reviewing changes to the template itself.
+Re-running setup on an existing repo is safe. Open another `Set up owner/name` issue after
+changing the ruleset or the script, and the settings are re-applied.
 
-What does carry over is the configuration in files: `.coderabbit.yaml`, `CLAUDE.md`, the
-workflows and the ruleset JSON (which the setup script applies). So each new repo needs only the
-two "add repository" clicks above plus the script.
+### What the token can do, and why it's contained
 
-To skip the clicks, you can install an app on *All repositories*. That's a reasonable trade for
-CodeRabbit (it reads code and comments on PRs). For Claude it means access to every repo you own,
-present and future, which is what you want to avoid, so keep Claude on *Only select repositories*.
+The token can administer every repo you own. It's kept narrow in practice:
+
+- It's stored only in the template repo's `repo-setup` environment, which only workflow runs
+  from `main` can use. A workflow edited on a PR branch can't read it.
+- The workflow runs only for issues opened by an admin of the template repo (you, or Claude
+  acting as you), and it only runs `setup-repo.sh`.
+- Claude never sees the token. It can only ask for the fixed setup to run.
+- Step 5 above makes changing that workflow go through a reviewed PR as well.
+
+When the token expires, the next setup run fails with a message pointing here. Create a new one
+with the same link and replace the secret.
+
+### Without the token
+
+Run the script yourself with the [GitHub CLI](https://cli.github.com) logged in as an admin, plus
+[jq](https://jqlang.org/download/):
+
+```sh
+.github/setup/setup-repo.sh owner/name
+```
+
+With no local toolchain, use a Codespace: on the repo, *Code → Codespaces → Create codespace*,
+then run `unset GITHUB_TOKEN; gh auth login --web` (the Codespace's built-in token can't change
+settings) and the command above. You'll still need to create the repo (*Use this template*) and
+add it to the apps by hand.
 
 ## How a PR gets merged
 
@@ -77,7 +110,7 @@ The `main` ruleset ([`ruleset-main.json`](ruleset-main.json)) requires:
 | Code scanning results | A new CodeQL alert of high/critical security severity or error level, or a zizmor alert of medium+ severity |
 | `zizmor` | The audit failing to run (or any finding, when `CODE_SCANNING=off`) |
 | `Dependency review` | A PR that adds a dependency with a known high/critical vulnerability |
-| `Lighthouse` | Accessibility or best-practices score under 90 on mobile (performance is reported, not gated) |
+| `Lighthouse` | Accessibility or best-practices score under 90 on mobile, or a preview that failed to deploy (performance is reported, not gated) |
 
 Required checks must come from GitHub Actions (the ruleset pins them to its app ID), so a status
 posted by anyone else can't satisfy them. Nobody is on the bypass list, including admins acting
@@ -109,10 +142,10 @@ Open it as a draft, add the `manual-merge` label before opening it, or run
 
 ## Deploys and previews
 
-- `deploy.yml` builds `main` into the root of the `gh-pages` branch on every push to `main`. An
+- `deploy.yaml` builds `main` into the root of the `gh-pages` branch on every push to `main`. An
   hourly run catches merges that didn't trigger a push event and exits early if `main` is already
   live. GitHub Pages can cache pages for up to 10 minutes.
-- `preview.yml` builds each PR into `gh-pages:/pr-preview/pr-N/`, comments the URL and a QR code
+- `preview.yaml` builds each PR into `gh-pages:/pr-preview/pr-N/`, comments the URL and a QR code
   for opening it on a phone, runs Lighthouse against it, and deletes it when the PR closes. Fork
   PRs get no preview, since their token can't write.
 - The build gets `BASE_PATH` (`/<repo>/` or `/<repo>/pr-preview/pr-N/`), `BUILD_SHA` and

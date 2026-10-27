@@ -19,15 +19,22 @@ test runner or package manager is chosen for you. CI calls `package.json` script
 
 ## Start a new app from this template
 
-1. **Use this template → Create a new repository** (public is simplest; see why in the guide).
-2. Add the new repo to the **CodeRabbit** and **Claude** GitHub Apps:
-   [github.com/settings/installations](https://github.com/settings/installations) → app →
-   **Configure** → *Repository access* → add the repo.
-3. From a clone, run `.github/setup/setup-repo.sh` (needs `gh` logged in as admin, and `jq`).
-4. Open [claude.ai/code](https://claude.ai/code), pick the repo, and describe the app.
+**Once:** mark this repo as a template, create a setup token and store it, and install the
+CodeRabbit and Claude GitHub Apps. About five minutes, following
+[Setting up repos](.github/setup/README.md#setting-up-repos).
 
-The full guide, including why the app connections can't be baked into the template, is in
-**[.github/setup/README.md](.github/setup/README.md)**.
+**Then, for each app:**
+
+1. Ask Claude to create it, e.g. *"Create agallant/space-dodge: a one-thumb arcade game for
+   phones"*. Claude opens a `Set up agallant/space-dodge` issue here, and the **Repo setup**
+   workflow creates the repo and configures its settings, merge gates and GitHub Pages.
+2. Add the new repo to the Claude app:
+   [github.com/settings/installations](https://github.com/settings/installations) → **Claude** →
+   **Configure** → *Repository access*. This is the one step GitHub only allows in a browser.
+3. Open a session on the new repo at [claude.ai/code](https://claude.ai/code) and describe the app.
+
+The guide also covers why app access can't be baked into the template, what the setup token can
+do, and how to set up a repo without it: **[.github/setup/README.md](.github/setup/README.md)**.
 
 ## What's in here
 
@@ -35,12 +42,12 @@ The full guide, including why the app connections can't be baked into the templa
 | --- | --- |
 | [`CLAUDE.md`](CLAUDE.md) | How Claude works in the repo: PR workflow, CI contract, PWA and mobile guidance, first-run bootstrap |
 | [`.coderabbit.yaml`](.coderabbit.yaml) | CodeRabbit review settings: request changes, then approve |
-| [`.github/workflows/`](.github/workflows) | CI, CodeQL, zizmor, Dependency review, PR preview + Lighthouse, deploy, auto-merge |
+| [`.github/workflows/`](.github/workflows) | CI, CodeQL, zizmor, Dependency review, PR preview + Lighthouse, deploy, auto-merge; plus Repo setup, which runs only in the template |
 | [`.github/setup/`](.github/setup) | Setup script, `main` ruleset JSON, and the setup guide |
 | [`.github/actions/setup/`](.github/actions/setup) | Shared step: detect package manager, install Node and dependencies |
 | [`.github/lighthouserc.json`](.github/lighthouserc.json) | Lighthouse thresholds for the preview audit |
 | `.editorconfig`, `.gitattributes`, `.gitignore`, `.nvmrc` | Editor and Git defaults; Node version for CI |
 
-Changes to this template go through the same PR flow if you run the setup script on it, but
-there's no app here to build: CI, CodeQL's JS/TS analysis, previews and Lighthouse skip
-themselves until a `package.json` exists.
+Changes to this template go through the same PR flow once it's set up (step 5 of the one-time
+setup). There's no app here to build, so CI, CodeQL's JS/TS analysis, previews and Lighthouse
+pass without doing anything until a `package.json` exists.

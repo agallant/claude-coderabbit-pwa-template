@@ -100,16 +100,39 @@ jobs:
 
   lighthouse:
     name: Lighthouse
-    needs: publish
-    if: needs.publish.outputs.action == 'deploy'
+    needs: [build, publish]
+    # Always runs on open PRs, so a failed build or publish fails this required check instead of
+    # skipping it (GitHub counts a skipped required check as passing).
+    if: always() && github.event.action != 'closed'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check that the preview deployed
+        id: gate
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          PUBLISH_RESULT: ${{ needs.publish.result }}
+          HAS_PROJECT: ${{ needs.build.outputs.has-project }}
+          ACTION: ${{ needs.publish.outputs.action }}
+        run: |
+          if [ "$BUILD_RESULT" = skipped ]; then
+            echo "::notice::No preview for PRs from forks; nothing to audit."
+          elif [ "$BUILD_RESULT" = success ] && [ "$HAS_PROJECT" != true ]; then
+            echo "::notice::No package.json yet; nothing to audit."
+          elif [ "$BUILD_RESULT" = success ] && [ "$PUBLISH_RESULT" = success ] && [ "$ACTION" = deploy ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::The preview didn't deploy (build: $BUILD_RESULT, publish: $PUBLISH_RESULT), so it can't be audited."
+            exit 1
+          fi
+
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Wait for GitHub Pages to serve this build
+        if: steps.gate.outputs.run == 'true'
         env:
           URL: ${{ needs.publish.outputs.url }}
           SHA: ${{ github.event.pull_request.head.sha }}
@@ -124,7 +147,8 @@ jobs:
           echo "::error::Pages did not serve this build at $URL within 10 minutes."
           exit 1
 
-      - uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12
+      - if: steps.gate.outputs.run == 'true'
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12
         with:
           urls: ${{ needs.publish.outputs.url }}
           configPath: .github/lighthouserc.json

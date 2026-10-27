@@ -3,20 +3,27 @@
 # can't carry over: merge options, the "main" ruleset (merge gates), security features and
 # GitHub Pages. Safe to re-run; every step is idempotent.
 #
-# Needs: gh (logged in as a repo admin: `gh auth login`) and jq.
+# Usually run for you by the "Repo setup" workflow in the template repo (see
+# .github/setup/README.md). To run it yourself you need gh (logged in as a repo admin, or with
+# GH_TOKEN set to a token with admin rights) and jq:
 #
 #   .github/setup/setup-repo.sh                 # repo of the current directory
 #   .github/setup/setup-repo.sh owner/name      # any repo you administer
 #
-# What it does NOT do (GitHub only allows these in the browser; see README "Set up"):
+# What it does NOT do (GitHub only allows these in the browser; see .github/setup/README.md):
 #   - add the repo to the CodeRabbit and Claude GitHub Apps
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
-ok()   { printf '  \033[32m✓\033[0m %s\n' "$*"; }
-warn() { printf '  \033[33m!\033[0m %s\n' "$*"; }
-step() { printf '\n\033[1m%s\033[0m\n' "$*"; }
-die()  { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
+if [ -t 1 ]; then
+  green=$'\033[32m' yellow=$'\033[33m' red=$'\033[31m' bold=$'\033[1m' reset=$'\033[0m'
+else
+  green='' yellow='' red='' bold='' reset=''
+fi
+ok()   { printf '  %s✓%s %s\n' "$green" "$reset" "$*"; }
+warn() { printf '  %s!%s %s\n' "$yellow" "$reset" "$*"; }
+step() { printf '\n%s%s%s\n' "$bold" "$*" "$reset"; }
+die()  { printf '%serror:%s %s\n' "$red" "$reset" "$*" >&2; exit 1; }
 
 command -v gh >/dev/null || die "GitHub CLI not found: https://cli.github.com"
 command -v jq >/dev/null || die "jq not found: https://jqlang.org/download/"
@@ -30,8 +37,9 @@ info="$(gh api "repos/$repo")" || die "can't read $repo"
 private="$(jq -r .private <<<"$info")"
 default_branch="$(jq -r .default_branch <<<"$info")"
 owner_type="$(jq -r .owner.type <<<"$info")"
+is_template="$(jq -r .is_template <<<"$info")"
 
-printf 'Setting up \033[1m%s\033[0m (%s)\n' "$repo" "$([ "$private" = true ] && echo private || echo public)"
+printf 'Setting up %s%s%s (%s)\n' "$bold" "$repo" "$reset" "$([ "$private" = true ] && echo private || echo public)"
 
 if [ "$default_branch" != main ]; then
   warn "default branch is '$default_branch'; the workflows expect 'main'. Rename it in Settings → General."
@@ -93,36 +101,40 @@ else warn "couldn't enable secret scanning (private repos need GitHub Secret Pro
 
 # ---------------------------------------------------------------------------------------------
 step "GitHub Pages (served from the gh-pages branch)"
-if ! gh api "repos/$repo/branches/gh-pages" --silent >/dev/null 2>&1; then
-  # Pages can only point at a branch that exists, so seed gh-pages with a placeholder page.
-  # The first deploy replaces it.
-  placeholder='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Coming soon</title><p>First deploy pending.</p>'
-  tree="$(jq -n --arg html "$placeholder" '{tree: [
-    {path: ".nojekyll", mode: "100644", type: "blob", content: ""},
-    {path: "index.html", mode: "100644", type: "blob", content: $html}]}' \
-    | gh api -X POST "repos/$repo/git/trees" --input - --jq .sha)"
-  commit="$(gh api -X POST "repos/$repo/git/commits" \
-    -f message="Initialize gh-pages" -f tree="$tree" --jq .sha)"
-  gh api -X POST "repos/$repo/git/refs" --silent -f ref=refs/heads/gh-pages -f sha="$commit"
-  ok "created gh-pages branch"
+if [ "$is_template" = true ]; then
+  ok "skipped: this is the template repo, which has no app to publish"
 else
-  ok "gh-pages branch exists"
-fi
+  if ! gh api "repos/$repo/branches/gh-pages" --silent >/dev/null 2>&1; then
+    # Pages can only point at a branch that exists, so seed gh-pages with a placeholder page.
+    # The first deploy replaces it.
+    placeholder='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Coming soon</title><p>First deploy pending.</p>'
+    tree="$(jq -n --arg html "$placeholder" '{tree: [
+      {path: ".nojekyll", mode: "100644", type: "blob", content: ""},
+      {path: "index.html", mode: "100644", type: "blob", content: $html}]}' \
+      | gh api -X POST "repos/$repo/git/trees" --input - --jq .sha)"
+    commit="$(gh api -X POST "repos/$repo/git/commits" \
+      -f message="Initialize gh-pages" -f tree="$tree" --jq .sha)"
+    gh api -X POST "repos/$repo/git/refs" --silent -f ref=refs/heads/gh-pages -f sha="$commit"
+    ok "created gh-pages branch"
+  else
+    ok "gh-pages branch exists"
+  fi
 
-pages_body='{"build_type":"legacy","source":{"branch":"gh-pages","path":"/"}}'
-if gh api "repos/$repo/pages" --silent >/dev/null 2>&1; then
-  gh api -X PUT "repos/$repo/pages" --silent --input - <<<"$pages_body"
-  pages_ok=1
-elif gh api -X POST "repos/$repo/pages" --silent --input - <<<"$pages_body" >/dev/null 2>&1; then
-  pages_ok=1
-else
-  pages_ok=0
-fi
-if [ "$pages_ok" = 1 ]; then
-  url="$(gh api "repos/$repo/pages" --jq .html_url 2>/dev/null || true)"
-  ok "Pages publishes gh-pages → ${url:-(URL appears after the first build)}"
-else
-  warn "couldn't enable Pages (private repos need a paid plan). Settings → Pages → Deploy from a branch → gh-pages."
+  pages_body='{"build_type":"legacy","source":{"branch":"gh-pages","path":"/"}}'
+  if gh api "repos/$repo/pages" --silent >/dev/null 2>&1; then
+    gh api -X PUT "repos/$repo/pages" --silent --input - <<<"$pages_body"
+    pages_ok=1
+  elif gh api -X POST "repos/$repo/pages" --silent --input - <<<"$pages_body" >/dev/null 2>&1; then
+    pages_ok=1
+  else
+    pages_ok=0
+  fi
+  if [ "$pages_ok" = 1 ]; then
+    url="$(gh api "repos/$repo/pages" --jq .html_url 2>/dev/null || true)"
+    ok "Pages publishes gh-pages → ${url:-(URL appears after the first build)}"
+  else
+    warn "couldn't enable Pages (private repos need a paid plan). Settings → Pages → Deploy from a branch → gh-pages."
+  fi
 fi
 
 # ---------------------------------------------------------------------------------------------
