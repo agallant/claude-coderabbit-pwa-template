@@ -23,18 +23,14 @@ test runner or package manager is chosen for you. CI calls `package.json` script
 CodeRabbit and Claude GitHub Apps. About five minutes, following
 [Setting up repos](.github/setup/README.md#setting-up-repos).
 
-**Then, for each app:**
+**Then, for each app:** start a session at [claude.ai/code](https://claude.ai/code) on this
+template repo and ask for it, e.g. *"Create a new app repo <your-account>/space-dodge: a one-thumb
+arcade game for phones. Then develop it: …"*. Claude has the **Repo setup** workflow create and
+configure the repo (settings, merge gates, GitHub Pages, Claude app access), then builds the app
+in the same session.
 
-1. Ask Claude to create it, e.g. *"Create agallant/space-dodge: a one-thumb arcade game for
-   phones"*. Claude opens a `Set up agallant/space-dodge` issue here, and the **Repo setup**
-   workflow creates the repo and configures its settings, merge gates and GitHub Pages.
-2. Add the new repo to the Claude app:
-   [github.com/settings/installations](https://github.com/settings/installations) → **Claude** →
-   **Configure** → *Repository access*. This is the one step GitHub only allows in a browser.
-3. Open a session on the new repo at [claude.ai/code](https://claude.ai/code) and describe the app.
-
-The guide also covers why app access can't be baked into the template, what the setup token can
-do, and how to set up a repo without it: **[.github/setup/README.md](.github/setup/README.md)**.
+The guide also covers why settings and app access can't be baked into the template, what the
+setup token can do, and how to set up a repo without it: **[.github/setup/README.md](.github/setup/README.md)**.
 
 ## What's in here
 

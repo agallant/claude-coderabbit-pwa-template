@@ -45,9 +45,12 @@ shouldn't have to run anything locally.
    (`gh api repos/agallant/claude-coderabbit-pwa-template/issues/<number>/comments --jq '.[].body'`).
    A successful run closes the issue. If it failed, pass on the error. A missing or expired
    `SETUP_TOKEN` is the usual cause, and the guide explains the fix.
-4. Ask the user to add the new repo to the Claude GitHub App
-   (github.com/settings/installations → Claude → Configure → Repository access), the one step
-   GitHub only allows in a browser. Once they confirm, attach the repo and bootstrap it as above.
+4. If the comment says the repo was added to the Claude app, attach it to this session with push
+   access, clone it, and carry on with the user's request there: bootstrap it as above, then
+   develop. Don't ask the user to start a new session. Otherwise, ask the user to add the repo
+   to the Claude GitHub App (github.com/settings/installations → Claude → Configure →
+   Repository access), and continue once they confirm.
+5. From then on, the new repo's own `CLAUDE.md` is the one that applies to work in it.
 
 Never ask the user for a token or to paste credentials; the workflow holds the only one.
 
@@ -58,6 +61,10 @@ Never ask the user for a token or to paste credentials; the workflow holds the o
   required check passes, CodeRabbit approves, and all review threads are resolved. So open a PR
   only when the work is ready to ship, or open it as a draft.
 - Keep PRs small enough to review in one pass; CodeRabbit skips very large ones.
+- CodeRabbit's free tier allows about one review an hour. If it comments that the review limit
+  was reached, wait the time it states, then comment `@coderabbitai review` on the PR to request
+  the review. That isn't an approval request, so it's fine. Pushing new commits while
+  rate-limited doesn't help.
 - After opening a PR, follow it to the end: wait for the checks and CodeRabbit's review, fix
   what's failing, and handle every review comment by either fixing it or replying with the
   reason it shouldn't change. Then resolve the thread. Unresolved threads block the merge.
