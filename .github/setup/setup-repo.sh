@@ -121,19 +121,27 @@ else
   fi
 
   pages_body='{"build_type":"legacy","source":{"branch":"gh-pages","path":"/"}}'
-  if gh api "repos/$repo/pages" --silent >/dev/null 2>&1; then
-    gh api -X PUT "repos/$repo/pages" --silent --input - <<<"$pages_body"
-    pages_ok=1
-  elif gh api -X POST "repos/$repo/pages" --silent --input - <<<"$pages_body" >/dev/null 2>&1; then
-    pages_ok=1
-  else
-    pages_ok=0
-  fi
+  pages_ok=0 pages_err=''
+  # A repo or branch created seconds ago can briefly be rejected, so retry a few times.
+  for attempt in 1 2 3 4 5; do
+    if gh api "repos/$repo/pages" --silent >/dev/null 2>&1; then
+      method=PUT
+    else
+      method=POST
+    fi
+    if pages_err="$(gh api -X "$method" "repos/$repo/pages" --silent --input - <<<"$pages_body" 2>&1)"; then
+      pages_ok=1
+      break
+    fi
+    [ "$attempt" -lt 5 ] && sleep 6
+  done
   if [ "$pages_ok" = 1 ]; then
     url="$(gh api "repos/$repo/pages" --jq .html_url 2>/dev/null || true)"
     ok "Pages publishes gh-pages → ${url:-(URL appears after the first build)}"
   else
-    warn "couldn't enable Pages (private repos need a paid plan). Settings → Pages → Deploy from a branch → gh-pages."
+    warn "couldn't enable Pages: ${pages_err:-unknown error}"
+    [ "$private" = true ] && warn "(Pages on private repos needs a paid plan.)"
+    warn "Enable it by hand: Settings → Pages → Deploy from a branch → gh-pages / (root)."
   fi
 fi
 
