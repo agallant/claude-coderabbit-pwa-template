@@ -158,7 +158,7 @@ jq -r '.rules[] | select(.type == "required_status_checks")
 ok "1 approving review (CodeRabbit's), resolved threads, squash only, no bypass"
 
 # ---------------------------------------------------------------------------------------------
-step "Still to do in the browser (GitHub doesn't allow this from the API)"
+step "If not done already, in the browser (GitHub doesn't allow this from the API)"
 apps_url="https://github.com/settings/installations"
 [ "$owner_type" = Organization ] && apps_url="https://github.com/organizations/${repo%%/*}/settings/installations"
 cat <<EOF

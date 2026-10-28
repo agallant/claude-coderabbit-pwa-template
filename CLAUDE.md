@@ -39,10 +39,11 @@ shouldn't have to run anything locally.
 2. Open an issue in the template repo titled `Set up <owner>/<name>`. Make the body's first line a
    one-line description of the app. Add a line `visibility: private` only if the user asked for a
    private repo.
-   `gh issue create --repo agallant/claude-coderabbit-pwa-template --title "Set up <owner>/<name>" --body "<description>"`
+   Use the REST API: `gh issue` commands go through GraphQL, which cloud sessions can't reach.
+   `gh api -X POST repos/agallant/claude-coderabbit-pwa-template/issues -f title="Set up <owner>/<name>" -f body="<description>"`
 3. Wait for the workflow's comment on the issue, usually within a minute
-   (`gh issue view <number> --repo agallant/claude-coderabbit-pwa-template --comments`). A
-   successful run closes the issue. If it failed, pass on the error. A missing or expired
+   (`gh api repos/agallant/claude-coderabbit-pwa-template/issues/<number>/comments --jq '.[].body'`).
+   A successful run closes the issue. If it failed, pass on the error. A missing or expired
    `SETUP_TOKEN` is the usual cause, and the guide explains the fix.
 4. Ask the user to add the new repo to the Claude GitHub App
    (github.com/settings/installations → Claude → Configure → Repository access), the one step
