@@ -166,13 +166,29 @@ jq -r '.rules[] | select(.type == "required_status_checks")
 ok "1 approving review (CodeRabbit's), resolved threads, squash only, no bypass"
 
 # ---------------------------------------------------------------------------------------------
-step "If not done already, in the browser (GitHub doesn't allow this from the API)"
+step "Claude GitHub App"
+# Adding a repo to an app installation is allowed through the API (with the "GitHub App
+# installation repository access" permission), but looking up the installation isn't, so its ID
+# comes from CLAUDE_APP_INSTALLATION_ID: the number at the end of the Claude app's settings URL.
+claude_added=0
+if [ -n "${CLAUDE_APP_INSTALLATION_ID:-}" ]; then
+  repo_id="$(jq -r .id <<<"$info")"
+  if err="$(gh api -X PUT "user/installations/$CLAUDE_APP_INSTALLATION_ID/repositories/$repo_id" --silent 2>&1)"; then
+    claude_added=1
+    ok "added ${repo#*/} to the Claude app; Claude sessions can now work in it"
+  else
+    warn "couldn't add ${repo#*/} to the Claude app: $err"
+  fi
+else
+  warn "CLAUDE_APP_INSTALLATION_ID isn't set, so add the repo to the Claude app by hand (below)."
+fi
+
+# ---------------------------------------------------------------------------------------------
 apps_url="https://github.com/settings/installations"
 [ "$owner_type" = Organization ] && apps_url="https://github.com/organizations/${repo%%/*}/settings/installations"
-cat <<EOF
-  1. CodeRabbit: $apps_url → CodeRabbit → Configure → Repository access → add ${repo#*/}
-     (not installed yet? https://github.com/apps/coderabbitai/installations/new)
-  2. Claude:     $apps_url → Claude → Configure → Repository access → add ${repo#*/}
-     (not installed yet? https://github.com/apps/claude/installations/new)
-  Without CodeRabbit nothing can approve, so no PR will merge: that is deliberate.
-EOF
+step "If not done already, in the browser (GitHub doesn't allow this from the API)"
+echo "  - CodeRabbit: $apps_url → CodeRabbit → Configure → Repository access → add ${repo#*/}"
+echo "    (or choose All repositories). Without CodeRabbit nothing can approve, so no PR merges."
+if [ "$claude_added" = 0 ]; then
+  echo "  - Claude: $apps_url → Claude → Configure → Repository access → add ${repo#*/}"
+fi

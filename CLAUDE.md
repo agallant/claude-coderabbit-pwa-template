@@ -45,9 +45,12 @@ shouldn't have to run anything locally.
    (`gh api repos/agallant/claude-coderabbit-pwa-template/issues/<number>/comments --jq '.[].body'`).
    A successful run closes the issue. If it failed, pass on the error. A missing or expired
    `SETUP_TOKEN` is the usual cause, and the guide explains the fix.
-4. Ask the user to add the new repo to the Claude GitHub App
-   (github.com/settings/installations → Claude → Configure → Repository access), the one step
-   GitHub only allows in a browser. Once they confirm, attach the repo and bootstrap it as above.
+4. If the comment says the repo was added to the Claude app, attach it to this session with push
+   access, clone it, and carry on with the user's request there: bootstrap it as above, then
+   develop. Don't ask the user to start a new session. Otherwise, ask the user to add the repo
+   to the Claude GitHub App (github.com/settings/installations → Claude → Configure →
+   Repository access), and continue once they confirm.
+5. From then on, the new repo's own `CLAUDE.md` is the one that applies to work in it.
 
 Never ask the user for a token or to paste credentials; the workflow holds the only one.
 
