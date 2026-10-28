@@ -58,6 +58,10 @@ Never ask the user for a token or to paste credentials; the workflow holds the o
   required check passes, CodeRabbit approves, and all review threads are resolved. So open a PR
   only when the work is ready to ship, or open it as a draft.
 - Keep PRs small enough to review in one pass; CodeRabbit skips very large ones.
+- CodeRabbit's free tier allows about one review an hour. If it comments that the review limit
+  was reached, wait the time it states, then comment `@coderabbitai review` on the PR to request
+  the review. That isn't an approval request, so it's fine. Pushing new commits while
+  rate-limited doesn't help.
 - After opening a PR, follow it to the end: wait for the checks and CodeRabbit's review, fix
   what's failing, and handle every review comment by either fixing it or replying with the
   reason it shouldn't change. Then resolve the thread. Unresolved threads block the merge.
