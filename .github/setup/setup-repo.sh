@@ -129,7 +129,8 @@ else
     else
       method=POST
     fi
-    if pages_err="$(gh api -X "$method" "repos/$repo/pages" --silent --input - <<<"$pages_body" 2>&1)"; then
+    # No --silent: on failure the response body carries GitHub's validation details.
+    if pages_err="$(gh api -X "$method" "repos/$repo/pages" --input - <<<"$pages_body" 2>&1)"; then
       pages_ok=1
       break
     fi
@@ -139,7 +140,7 @@ else
     url="$(gh api "repos/$repo/pages" --jq .html_url 2>/dev/null || true)"
     ok "Pages publishes gh-pages → ${url:-(URL appears after the first build)}"
   else
-    warn "couldn't enable Pages: ${pages_err:-unknown error}"
+    warn "couldn't enable Pages: $(tr -s '\n ' ' ' <<<"${pages_err:-unknown error}")"
     [ "$private" = true ] && warn "(Pages on private repos needs a paid plan.)"
     warn "Enable it by hand: Settings → Pages → Deploy from a branch → gh-pages / (root)."
   fi
@@ -173,11 +174,11 @@ step "Claude GitHub App"
 claude_added=0
 if [ -n "${CLAUDE_APP_INSTALLATION_ID:-}" ]; then
   repo_id="$(jq -r .id <<<"$info")"
-  if err="$(gh api -X PUT "user/installations/$CLAUDE_APP_INSTALLATION_ID/repositories/$repo_id" --silent 2>&1)"; then
+  if err="$(gh api -X PUT "user/installations/$CLAUDE_APP_INSTALLATION_ID/repositories/$repo_id" 2>&1)"; then
     claude_added=1
     ok "added ${repo#*/} to the Claude app; Claude sessions can now work in it"
   else
-    warn "couldn't add ${repo#*/} to the Claude app: $err"
+    warn "couldn't add ${repo#*/} to the Claude app: $(tr -s '\n ' ' ' <<<"$err")"
   fi
 else
   warn "CLAUDE_APP_INSTALLATION_ID isn't set, so add the repo to the Claude app by hand (below)."

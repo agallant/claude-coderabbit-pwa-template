@@ -59,10 +59,10 @@ You need:
 Start a session at [claude.ai/code](https://claude.ai/code) on **the template repo**, and ask for
 the new app by name along with what it should be. For example:
 
-> Create a new app repo agallant/space-dodge: a one-thumb arcade game for phones where you dodge
+> Create a new app repo <your-account>/space-dodge: a one-thumb arcade game for phones where you dodge
 > falling rocks. Then develop it: …
 
-Claude follows `CLAUDE.md`: it opens a `Set up agallant/space-dodge` issue, and the Repo setup
+Claude follows `CLAUDE.md`: it opens a `Set up <your-account>/space-dodge` issue, and the Repo setup
 workflow creates the repo, configures it, gives the Claude app access and closes the issue.
 Claude then attaches the new repo to the same session and builds the app there. You don't need
 to click anything or start a second chat.

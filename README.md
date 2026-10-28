@@ -24,7 +24,7 @@ CodeRabbit and Claude GitHub Apps. About five minutes, following
 [Setting up repos](.github/setup/README.md#setting-up-repos).
 
 **Then, for each app:** start a session at [claude.ai/code](https://claude.ai/code) on this
-template repo and ask for it, e.g. *"Create a new app repo agallant/space-dodge: a one-thumb
+template repo and ask for it, e.g. *"Create a new app repo <your-account>/space-dodge: a one-thumb
 arcade game for phones. Then develop it: …"*. Claude has the **Repo setup** workflow create and
 configure the repo (settings, merge gates, GitHub Pages, Claude app access), then builds the app
 in the same session.
