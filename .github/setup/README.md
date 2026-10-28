@@ -162,6 +162,13 @@ Optional, under *Settings → Secrets and variables → Actions → Variables*:
 | `AUTOMERGE` | on | `off` stops PRs from merging by themselves |
 | `CODE_SCANNING` | on | `off` skips CodeQL, Dependency review and zizmor's upload; the setup script sets it on private repos without Code Security |
 
+## Merged branches
+
+`delete-merged-branch.yaml` deletes a PR's branch after it merges. The repo's *Automatically
+delete head branches* setting is on too, but GitHub doesn't apply it to merges made by
+github-actions[bot], which is who auto-merge merges as here. A branch is kept if it got new
+commits after the merge or another open PR is based on it.
+
 ## Holding a PR back
 
 Open it as a draft, add the `manual-merge` label before opening it, or run

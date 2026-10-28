@@ -1,0 +1,56 @@
+# Deletes a PR's branch once the PR merges. The repo's "Automatically delete head branches"
+# setting is on, but GitHub doesn't apply it when the merge is made by github-actions[bot], which
+# is who merges here (auto-merge is enabled by automerge.yaml with the workflow token).
+#
+# The branch is kept if it moved after the merge (commits that never reached main) or if another
+# open PR is based on it.
+name: Delete merged branch
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: delete-merged-branch-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  delete:
+    name: Delete merged branch
+    if: >-
+      github.event.pull_request.merged &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref != github.event.repository.default_branch &&
+      github.event.pull_request.head.ref != 'gh-pages'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write # delete the branch
+      pull-requests: read # check for open PRs based on it
+    steps:
+      - name: Delete the branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          MERGED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          encoded="$(jq -rn --arg b "$BRANCH" '$b | @uri')"
+          tip="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$encoded" --jq .object.sha 2>/dev/null || true)"
+          if [ -z "$tip" ]; then
+            echo "Branch $BRANCH is already gone."
+            exit 0
+          fi
+          if [ "$tip" != "$MERGED_SHA" ]; then
+            echo "::notice::Keeping $BRANCH: it has commits added after the merge ($MERGED_SHA → $tip)."
+            exit 0
+          fi
+          dependents="$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&base=$encoded" --jq length)"
+          if [ "$dependents" != 0 ]; then
+            echo "::notice::Keeping $BRANCH: $dependents open PR(s) are based on it."
+            exit 0
+          fi
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$encoded"
+          echo "Deleted $BRANCH."
