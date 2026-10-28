@@ -18,8 +18,8 @@ those sessions aren't allowed to change repo settings, rulesets or Pages.
 
 1. **Mark it as a template**: *Settings → General → Template repository*.
 2. **Create the setup token**. This
-   [prefilled link](https://github.com/settings/personal-access-tokens/new?name=Repo+setup+%28PWA+template%29&description=Used+only+by+the+Repo+setup+workflow+in+the+PWA+template+repo,+to+create+and+configure+app+repos.&expires_in=366&administration=write&contents=write&issues=write&pages=write&actions_variables=write&repository_creation=write)
-   fills in the name, a 1-year expiry and the permissions. Under *Repository access*, choose
+   [prefilled link](https://github.com/settings/personal-access-tokens/new?name=Repo+setup+%28PWA+template%29&description=Used+only+by+the+Repo+setup+workflow+in+the+PWA+template+repo,+to+create+and+configure+app+repos.&expires_in=365&administration=write&contents=write&issues=write&pages=write&actions_variables=write&repository_creation=write)
+   fills in the name, an expiry a year out and the permissions. Under *Repository access*, choose
    **All repositories** (the repos it will set up don't exist yet), then **Generate token** and
    copy it.
    - The permissions, if you'd rather fill the form in by hand: Administration, Contents, Issues,
