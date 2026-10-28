@@ -14,12 +14,23 @@ creates the repo from the template and runs [`setup-repo.sh`](setup-repo.sh) on 
 token you create once. Claude can't apply these settings from a cloud session itself, since
 those sessions aren't allowed to change repo settings, rulesets or Pages.
 
-### Once, in the template repo (about five minutes)
+### Once, in the template repo (about ten minutes)
 
+You need:
+
+- a Claude plan that includes Claude Code cloud sessions, with GitHub connected at
+  [claude.ai/code](https://claude.ai/code). Connecting GitHub there installs the Claude GitHub App.
+- a GitHub account that owns the template and the app repos. CodeRabbit's free tier covers
+  public repos, with roughly one review an hour.
+
+0. **Your own copy** (skip this if you own this repo): *Use this template → Create a new
+   repository*, then, in the copy, replace `agallant/claude-coderabbit-pwa-template` with your
+   copy's `owner/name` everywhere it appears (`CLAUDE.md`, this guide and the root README).
 1. **Mark it as a template**: *Settings → General → Template repository*.
 2. **Create the setup token**. This
    [prefilled link](https://github.com/settings/personal-access-tokens/new?name=Repo+setup+%28PWA+template%29&description=Used+only+by+the+Repo+setup+workflow+in+the+PWA+template+repo,+to+create+and+configure+app+repos.&expires_in=365&administration=write&contents=write&issues=write&pages=write&actions_variables=write&repository_creation=write&installation_repositories=write)
-   fills in the name, an expiry a year out and the permissions. Under *Repository access*, choose
+   fills in the name, an expiry a year out and the permissions. If GitHub rejects the expiry,
+   pick the longest it allows. Under *Repository access*, choose
    **All repositories** (the repos it will set up don't exist yet), then **Generate token** and
    copy it.
    - The permissions, if you'd rather fill the form in by hand (or check the link got them all):
@@ -39,9 +50,9 @@ those sessions aren't allowed to change repo settings, rulesets or Pages.
      **Claude** → **Configure**. The page URL ends in `/installations/<number>`. In the
      `repo-setup` environment from step 3, *Add environment variable*: name
      `CLAUDE_APP_INSTALLATION_ID`, value that number.
-5. **Optional: gate the template too.** Open an issue in the template repo titled
-   `Set up agallant/claude-coderabbit-pwa-template`. That applies the same ruleset, so changes to
-   the template (and to the workflow that holds the token) also need CodeRabbit's approval.
+5. **Recommended: gate the template too.** Open an issue in the template repo titled
+   `Set up <owner>/<template-repo>` (or ask Claude to). That applies the same ruleset, so changes
+   to the template, including the workflow that holds the token, also need CodeRabbit's approval.
 
 ### For each new app
 
@@ -79,6 +90,9 @@ kept narrow in practice:
   acting as you), and it only runs `setup-repo.sh`.
 - Claude never sees the token. It can only ask for the fixed setup to run.
 - Step 5 above makes changing that workflow go through a reviewed PR as well.
+- To revoke it, delete the token at
+  [github.com/settings/personal-access-tokens](https://github.com/settings/personal-access-tokens).
+  Setup then stops working until you add a new one; nothing else breaks.
 
 When the token expires, the next setup run fails with a message pointing here. Create a new one
 with the same link and replace the secret.
