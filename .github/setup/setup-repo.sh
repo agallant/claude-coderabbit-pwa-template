@@ -76,9 +76,6 @@ else
   gh variable delete CODE_SCANNING --repo "$repo" >/dev/null 2>&1 || true
 fi
 
-gh label create manual-merge --repo "$repo" --force \
-  --color d93f0b --description "Don't auto-merge this PR" >/dev/null
-ok "label 'manual-merge' (add it before opening a PR to skip auto-merge)"
 
 # ---------------------------------------------------------------------------------------------
 step "Security features"

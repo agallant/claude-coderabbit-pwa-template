@@ -38,7 +38,7 @@ setup token can do, and how to set up a repo without it: **[.github/setup/README
 | --- | --- |
 | [`CLAUDE.md`](CLAUDE.md) | How Claude works in the repo: PR workflow, CI contract, PWA and mobile guidance, first-run bootstrap |
 | [`.coderabbit.yaml`](.coderabbit.yaml) | CodeRabbit review settings: request changes, then approve |
-| [`.github/workflows/`](.github/workflows) | CI, CodeQL, zizmor, Dependency review, PR preview + Lighthouse, deploy, auto-merge, merged-branch cleanup; plus Repo setup, which runs only in the template |
+| [`.github/workflows/`](.github/workflows) | CI, CodeQL, zizmor, Dependency review, PR preview + Lighthouse, deploy; plus Repo setup, which runs only in the template |
 | [`.github/setup/`](.github/setup) | Setup script, `main` ruleset JSON, and the setup guide |
 | [`.github/actions/setup/`](.github/actions/setup) | Shared step: detect package manager, install Node and dependencies |
 | [`.github/lighthouserc.json`](.github/lighthouserc.json) | Lighthouse thresholds for the preview audit |

@@ -57,9 +57,13 @@ Never ask the user for a token or to paste credentials; the workflow holds the o
 ## How changes land
 
 - Work on a branch and open a PR into `main`. Pushing to `main` directly is blocked.
-- Non-draft PRs get auto-merge turned on as soon as they open. A PR merges by itself once every
-  required check passes, CodeRabbit approves, and all review threads are resolved. So open a PR
-  only when the work is ready to ship, or open it as a draft.
+- Right after opening a PR that's ready to ship, turn on auto-merge for it:
+  `gh api -X PUT repos/<owner>/<repo>/pulls/<number>/ccr/auto_merge -f merge_method=squash`.
+  It then merges by itself once every required check passes, CodeRabbit approves, and all review
+  threads are resolved. Turn it on this way, as the user, and never from a workflow: a merge
+  made with a workflow's token triggers no other workflows, so `main` wouldn't deploy, the PR
+  preview wouldn't be removed, and the branch wouldn't be deleted. Open unfinished work as a
+  draft without auto-merge.
 - Keep PRs small enough to review in one pass; CodeRabbit skips very large ones.
 - CodeRabbit's free tier allows about one review an hour. If it comments that the review limit
   was reached, wait the time it states, then comment `@coderabbitai review` on the PR to request
@@ -69,7 +73,7 @@ Never ask the user for a token or to paste credentials; the workflow holds the o
   what's failing, and handle every review comment by either fixing it or replying with the
   reason it shouldn't change. Then resolve the thread. Unresolved threads block the merge.
 - Never ask CodeRabbit to approve or resolve (`@coderabbitai approve`, `@coderabbitai resolve`),
-  dismiss its reviews, or mark a PR `manual-merge` to dodge a gate.
+  or dismiss its reviews.
 - Don't weaken a gate to get a PR through: the workflows in `.github/`, `.github/setup/ruleset-main.json`,
   `.github/lighthouserc.json` and `.coderabbit.yaml`. If one is genuinely wrong, change it in its
   own PR that says so in the title, and only when the user has asked for or agreed to it.

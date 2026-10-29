@@ -114,8 +114,7 @@ add it to the apps by hand.
 ## How a PR gets merged
 
 ```
-Claude pushes a branch and opens a PR
-  ├─ Auto-merge workflow ─── enables GitHub auto-merge (squash)
+Claude pushes a branch, opens a PR and turns on auto-merge (squash)
   ├─ CI ─────────────────── typecheck, lint, test, build, build-output check
   ├─ CodeQL ─────────────── code scanning of the app (JS/TS) and of the workflows
   ├─ zizmor ─────────────── security audit of the workflows
@@ -159,20 +158,21 @@ Optional, under *Settings → Secrets and variables → Actions → Variables*:
 | --- | --- | --- |
 | `BUILD_DIR` | `dist` | Folder the `build` script writes the site to |
 | `SITE_BASE_PATH` | `/<repo>/` | Path the site is served from. Set to `/` for a custom domain |
-| `AUTOMERGE` | on | `off` stops PRs from merging by themselves |
 | `CODE_SCANNING` | on | `off` skips CodeQL, Dependency review and zizmor's upload; the setup script sets it on private repos without Code Security |
 
-## Merged branches
+## Why Claude, not a workflow, turns on auto-merge
 
-`delete-merged-branch.yaml` deletes a PR's branch after it merges. The repo's *Automatically
-delete head branches* setting is on too, but GitHub doesn't apply it to merges made by
-github-actions[bot], which is who auto-merge merges as here. A branch is kept if it got new
-commits after the merge or another open PR is based on it.
+GitHub doesn't start workflows for events caused by a workflow's own token. If a workflow turned
+on auto-merge, the merge would be made by github-actions[bot], and nothing would run afterwards:
+no deploy of `main` (only the hourly fallback), no removal of the PR preview, and no automatic
+deletion of the merged branch. So Claude turns on auto-merge itself, as you, right after opening
+each PR (see `CLAUDE.md`), and the merge counts as yours. For PRs you open yourself, click
+**Enable auto-merge** on the PR. Dependabot PRs wait until you or Claude turn it on.
 
 ## Holding a PR back
 
-Open it as a draft, add the `manual-merge` label before opening it, or run
-`gh pr merge --disable-auto <number>`.
+Leave auto-merge off (or turn it off with **Disable auto-merge** on the PR), or open it as a
+draft.
 
 ## Deploys and previews
 
