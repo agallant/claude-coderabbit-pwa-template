@@ -23,6 +23,9 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+    # Review PRs from bots too (Dependabot). Otherwise they're skipped as "Bot user detected",
+    # and since merging needs CodeRabbit's approval, they'd never merge.
+    skip_bot_users: false
     base_branches:
       - '.*' # Review PRs into any branch, not just the default one.
 

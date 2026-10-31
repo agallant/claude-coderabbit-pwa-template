@@ -69,6 +69,16 @@ Never ask the user for a token or to paste credentials; the workflow holds the o
   was reached, wait the time it states, then comment `@coderabbitai review` on the PR to request
   the review. That isn't an approval request, so it's fine. Pushing new commits while
   rate-limited doesn't help.
+- CodeRabbit answers `@coderabbitai review` within a minute or two ("Review triggered"). If it
+  hasn't after ten minutes, post the command again. If it says the review was skipped (for
+  example "Bot user detected"), `@coderabbitai review` also forces a review of that PR.
+- Never leave a PR waiting unattended. Before ending a turn with a PR still open, schedule a
+  check-in for yourself (for after the rate limit resets, or in about 20 minutes) to pick it
+  back up.
+- **Dependabot PRs** need the same approval as any other PR. When you see one open, check that its
+  CI passed (a major-version bump that breaks the build needs a fix in a PR of your own first),
+  make sure CodeRabbit has reviewed it (request a review as above), and turn on auto-merge for it
+  the same way. Space them out: each review uses the hourly allowance your own PRs need.
 - After opening a PR, follow it to the end: wait for the checks and CodeRabbit's review, fix
   what's failing, and handle every review comment by either fixing it or replying with the
   reason it shouldn't change. Then resolve the thread. Unresolved threads block the merge.
