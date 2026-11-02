@@ -127,9 +127,12 @@ approval.
    - **Green, not yet reviewed**: comment `@coderabbitai review`, since CodeRabbit skips bot PRs
      on its own. Request at most one review per run, and none while one of your own PRs is
      waiting on CodeRabbit: they share the hourly allowance.
-   - **Review comments**: you can't push to the branch, so fix anything real in a PR of your own;
-     otherwise reply with why it's fine. Resolve each thread.
-   - **Auto-merge**: turn it on as the user, as for any PR, so the merge triggers the deploy.
+   - **Review comments**: you can't push to the branch. If a comment finds a real problem, treat
+     it like a breaking bump: open your own PR with the bump and the fix, close the Dependabot PR
+     with a comment linking to yours, and don't turn on its auto-merge. Otherwise reply with why
+     it's fine. Resolve each thread.
+   - **Auto-merge**: once nothing above applies, turn it on as the user, as for any PR, so the
+     merge triggers the deploy.
 3. Only message the user when something needs them, such as a breaking bump you couldn't fix or a
    gate that seems wrong.
 
