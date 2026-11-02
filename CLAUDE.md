@@ -92,8 +92,9 @@ Never ask the user for a token or to paste credentials; the workflow holds the o
 
 ## Dependabot PRs
 
-Dependabot PRs merge as-is, with no help from the user: a daily scheduled task starts a fresh
-Claude session that takes each one through the same gates as any other PR.
+Dependabot PRs land with no help from the user: a daily scheduled task starts a fresh Claude
+session that takes each one through the same gates as any other PR. A PR merges as-is only when
+none of the cases under "Each run" calls for a replacement PR.
 
 **The scheduled task.** Each app repo has one recurring scheduled task, named
 `<repo> Dependabot`, that starts a fresh session once a day with this prompt:
