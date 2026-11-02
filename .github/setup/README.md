@@ -167,7 +167,7 @@ on auto-merge, the merge would be made by github-actions[bot], and nothing would
 no deploy of `main` (only the hourly fallback), no removal of the PR preview, and no automatic
 deletion of the merged branch. So Claude turns on auto-merge itself, as you, right after opening
 each PR (see `CLAUDE.md`), and the merge counts as yours. For PRs you open yourself, click
-**Enable auto-merge** on the PR. Dependabot PRs wait until you or Claude turn it on.
+**Enable auto-merge** on the PR. Dependabot PRs get it from a daily scheduled Claude session (see "Dependabot PRs" in `CLAUDE.md`).
 
 ## Holding a PR back
 
