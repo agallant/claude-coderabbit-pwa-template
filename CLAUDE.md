@@ -49,8 +49,9 @@ shouldn't have to run anything locally.
 4. If the comment says the repo was added to the Claude app, attach it to this session with push
    access, clone it, and carry on with the user's request there: bootstrap it as above, then
    develop. Don't ask the user to start a new session. Otherwise, ask the user to add the repo
-   to the Claude GitHub App (github.com/settings/installations → Claude → Configure →
-   Repository access), and continue once they confirm.
+   to the Claude GitHub App (github.com/settings/installations, or
+   github.com/organizations/<org>/settings/installations for an organization → Claude →
+   Configure → Repository access), and continue once they confirm.
 5. From then on, the new repo's own `CLAUDE.md` is the one that applies to work in it.
 
 Never ask the user for a token or to paste credentials; the workflow holds the only one.
