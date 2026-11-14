@@ -36,7 +36,9 @@ You need:
    - The permissions, if you'd rather fill the form in by hand (or check the link got them all):
      Administration, Contents, Issues, Pages, Variables, Repository creation and GitHub App
      installation repository access, each *Read and write*. The last one lets setup give the
-     Claude app access to each new repo.
+     Claude app access to each new repo. It works on any app installation your account can manage,
+     not only Claude's, and repos it adds stay added if the token is later revoked, so treat the
+     token as able to change your apps' repository access.
 3. **Store the token**: template repo → *Settings → Environments → New environment* named
    `repo-setup`. Under *Deployment branches and tags*, choose **Selected branches and tags** and
    add `main`. Then *Add environment secret*: name `SETUP_TOKEN`, value the token.
@@ -47,7 +49,9 @@ You need:
    - [Claude](https://github.com/apps/claude): keep **Only select repositories** and include the
      template repo. Setup adds each new app repo for you, once it knows the installation's ID:
      open [github.com/settings/installations](https://github.com/settings/installations) →
-     **Claude** → **Configure**. The page URL ends in `/installations/<number>`. In the
+     **Claude** → **Configure** (for a template owned by an organization:
+     `github.com/organizations/<org>/settings/installations` → **Claude** → **Configure**). The page
+     URL ends in `/installations/<number>`. In the
      `repo-setup` environment from step 3, *Add environment variable*: name
      `CLAUDE_APP_INSTALLATION_ID`, value that number.
 5. **Recommended: gate the template too.** Open an issue in the template repo titled
@@ -167,7 +171,7 @@ on auto-merge, the merge would be made by github-actions[bot], and nothing would
 no deploy of `main` (only the hourly fallback), no removal of the PR preview, and no automatic
 deletion of the merged branch. So Claude turns on auto-merge itself, as you, right after opening
 each PR (see `CLAUDE.md`), and the merge counts as yours. For PRs you open yourself, click
-**Enable auto-merge** on the PR. Dependabot PRs wait until you or Claude turn it on.
+**Enable auto-merge** on the PR. Dependabot PRs get it from a daily scheduled Claude session (see "Dependabot PRs" in `CLAUDE.md`).
 
 ## Holding a PR back
 
