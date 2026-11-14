@@ -100,8 +100,8 @@ none of the cases under "Each run" calls for a replacement PR.
 started on the repo (so it has the repo checked out and can push to it), and one recurring
 scheduled task of the same name that sends that session a message once a day:
 
-> Daily Dependabot run for `<owner>/<repo>`: pull `main`, then follow "Dependabot PRs" in
-> CLAUDE.md on `main`.
+> Daily Dependabot run for `<owner>/<repo>`: check out `main` (stash or commit any leftover work
+> on its own branch first), pull it, then follow "Dependabot PRs" in CLAUDE.md on `main`.
 
 Don't use a task that starts a fresh session each time: a fresh session has no repository
 attached and can't attach one, so it can't do anything. Create the session and the task when you
