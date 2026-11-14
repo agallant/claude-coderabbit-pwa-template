@@ -130,7 +130,9 @@ approval.
      to yours. Other failures are handled like any red CI.
    - **Green, not yet reviewed**: comment `@coderabbitai review`, since CodeRabbit skips bot PRs
      on its own. Request at most one review per run, and none while one of your own PRs is
-     waiting on CodeRabbit: they share the hourly allowance.
+     waiting on CodeRabbit: they share the hourly allowance. If an earlier run already requested
+     a review on a PR and CodeRabbit never answered, request it again only after every other
+     green PR has had its turn, so one stuck PR can't hold up the rest.
    - **Review comments**: you can't push to the branch. If a comment finds a real problem, treat
      it like a breaking bump: open your own PR with the bump and the fix, close the Dependabot PR
      with a comment linking to yours, and don't turn on its auto-merge. Otherwise reply with why
