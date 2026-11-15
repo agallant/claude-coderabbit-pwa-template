@@ -16,12 +16,20 @@ fi
 bot='coderabbitai[bot]'
 window=3600
 
+# Every open PR (the queue), plus the most recently updated ones of any state: a review from the
+# last hour is always on a PR that was updated in the last hour.
+fields='.[] | "\(.number) \(.state) \(.draft) \(.user.login) \(.head.sha)"'
+open_prs="$(gh api --paginate "repos/$repo/pulls?state=open&per_page=100" --jq "$fields")"
+recent_prs="$(gh api "repos/$repo/pulls?state=all&sort=updated&direction=desc&per_page=50" \
+  --jq "$fields")"
+prs="$(printf '%s\n%s\n' "$open_prs" "$recent_prs" | sed '/^$/d' | sort -u)"
+
 last=""
 last_pr=""
 waiting=()
-# Recently updated PRs cover every review from the last hour.
 while read -r number state draft author sha; do
-  reviews="$(gh api "repos/$repo/pulls/$number/reviews?per_page=100" \
+  [ -n "$number" ] || continue
+  reviews="$(gh api --paginate "repos/$repo/pulls/$number/reviews?per_page=100" \
     --jq ".[] | select(.user.login==\"$bot\") | \"\(.submitted_at) \(.commit_id)\"")"
   newest="$(printf '%s\n' "$reviews" | sort | tail -n 1 | cut -d' ' -f1)"
   if [ -n "$newest" ] && [[ "$newest" > "$last" ]]; then
@@ -33,8 +41,7 @@ while read -r number state draft author sha; do
     ! printf '%s\n' "$reviews" | grep -q " $sha\$"; then
     waiting+=("$number")
   fi
-done < <(gh api "repos/$repo/pulls?state=all&sort=updated&direction=desc&per_page=30" \
-  --jq '.[] | "\(.number) \(.state) \(.draft) \(.user.login) \(.head.sha)"')
+done <<<"$prs"
 
 now="$(date -u +%s)"
 if [ -z "$last" ]; then

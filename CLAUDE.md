@@ -67,20 +67,20 @@ Never ask the user for a token or to paste credentials; the workflow holds the o
   preview wouldn't be removed, and the branch wouldn't be deleted. Open unfinished work as a
   draft without auto-merge.
 - Keep PRs small enough to review in one pass; CodeRabbit skips very large ones.
-- CodeRabbit's free tier allows about one review an hour **per repo**, and every session working
-  in the repo shares it (other Claude sessions and the daily Dependabot run included). Take
-  turns:
+- CodeRabbit's free tier allows about one review an hour, and every session working in the repo
+  shares it (other Claude sessions and the daily Dependabot run included). Take turns:
   - Run `.github/scripts/coderabbit-queue.sh` before you open a PR, push to one, or comment
     `@coderabbitai review`. It prints when the next review is available and which open PRs are
-    waiting for one, in turn order (lowest number first).
+    waiting for one, in turn order: lowest number first, whatever kind of PR it is.
   - If the hour isn't up, or a PR ahead of yours is waiting, don't push or request a review:
     schedule your check-in for when your turn comes (the next slot, plus an hour for each PR
     ahead of yours) and carry on with other work on a branch that has no PR yet.
   - Spend one review per round. A push to a PR that CodeRabbit already reviewed uses a review,
     so fix every finding and every failing check first, then push once.
-  - If CodeRabbit comments that the review limit was reached anyway, wait the time it states,
-    then comment `@coderabbitai review`. That isn't an approval request, so it's fine. Pushing
-    new commits while rate-limited doesn't help.
+  - If CodeRabbit comments that the review limit was reached anyway (the allowance can also be
+    used up by work in the user's other repos, which the script can't see), wait the time it
+    states, then comment `@coderabbitai review`. That isn't an approval request, so it's fine.
+    Pushing new commits while rate-limited doesn't help.
 - CodeRabbit answers `@coderabbitai review` within a minute or two ("Review triggered"). If it
   hasn't after ten minutes, post the command again. It never reviews a PR that a bot opened
   (the bot has no review seat), whatever you comment; see "Dependabot PRs" below.
@@ -143,14 +143,20 @@ required checks and CodeRabbit's approval.
 4. Run the `package.json` scripts CI runs. If a bump breaks them (usually a major version), fix
    the code in the same PR when the fix is small. Otherwise leave that bump out, say why in a
    comment on its Dependabot PR, and tell the user.
-5. Open one PR for the branch, titled `deps: <what was bumped>`, with a body that lists the
-   Dependabot PRs it replaces. Turn on auto-merge and follow it to the end, as for any PR. It
-   waits its turn for CodeRabbit like every other PR (see "How changes land"), behind PRs that
-   aren't dependency bumps.
-6. Comment on each Dependabot PR you copied with a link to yours, and leave it open: Dependabot
+5. Run `.github/scripts/coderabbit-queue.sh`. CodeRabbit allows about one review an hour,
+   shared with every other session working in the repo. If the hour isn't up, or an open PR is
+   already waiting for a review, schedule a check-in for when the turn comes and stop here; the
+   branch can wait.
+6. Open one PR for the branch, titled `deps: <what was bumped>`, with a body that lists the
+   Dependabot PRs it replaces. Turn on auto-merge
+   (`gh api -X PUT repos/<owner>/<repo>/pulls/<number>/ccr/auto_merge -f merge_method=squash`)
+   and follow it to the end: fix failing checks, and fix or answer every review comment and
+   resolve its thread. Run the queue script again before each push, and fix everything from a
+   review round in one push.
+7. Comment on each Dependabot PR you copied with a link to yours, and leave it open: Dependabot
    closes it by itself once `main` has the new version. Close any that are still open after
    your PR merges.
-7. Only message the user when something needs them, such as a breaking bump you couldn't fix or a
+8. Only message the user when something needs them, such as a breaking bump you couldn't fix or a
    gate that seems wrong.
 
 ## CI contract
