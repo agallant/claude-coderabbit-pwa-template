@@ -151,8 +151,11 @@ required checks and CodeRabbit's approval.
    Dependabot PRs it replaces. Turn on auto-merge
    (`gh api -X PUT repos/<owner>/<repo>/pulls/<number>/ccr/auto_merge -f merge_method=squash`)
    and follow it to the end: fix failing checks, and fix or answer every review comment and
-   resolve its thread. Run the queue script again before each push, and fix everything from a
-   review round in one push.
+   resolve its thread. Run the queue script again before each push and before each
+   `@coderabbitai review` comment, and wait for the turn it reports; fix everything from a
+   review round in one push. Comment `@coderabbitai review` only when CodeRabbit hasn't
+   reviewed the PR's latest commit: if it said the review limit was reached, wait the time it
+   states first, and if it hasn't answered the command after ten minutes, post it again.
 7. Comment on each Dependabot PR you copied with a link to yours, and leave it open: Dependabot
    closes it by itself once `main` has the new version. Close any that are still open after
    your PR merges.

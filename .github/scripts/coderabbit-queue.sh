@@ -16,8 +16,9 @@ fi
 bot='coderabbitai[bot]'
 window=3600
 
-# Every open PR (the queue), plus every PR of any state updated within the window: a review
-# from the last hour is always on a PR that was updated in the last hour.
+# Every open PR (the queue), plus every PR of any state updated within the window. Together
+# they hold every review from the last hour: its PR is either still open, or was closed or
+# merged after the review, which sets updated_at inside the window.
 fields='"\(.number) \(.state) \(.draft) \(.user.login) \(.head.sha)"'
 open_prs="$(gh api --paginate "repos/$repo/pulls?state=open&per_page=100" --jq ".[] | $fields")"
 cutoff="$(date -u -d "@$(($(date -u +%s) - window))" +%Y-%m-%dT%H:%M:%SZ)"
