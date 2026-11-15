@@ -19,7 +19,7 @@ window=3600
 # Every open PR (the queue), plus every PR of any state updated within the window. Together
 # they hold every review from the last hour: its PR is either still open, or was closed or
 # merged after the review, which sets updated_at inside the window.
-fields='"\(.number) \(.state) \(.draft) \(.user.login) \(.head.sha)"'
+fields='"\(.number) \(.state) \(.draft) \(.user.type) \(.head.sha)"'
 open_prs="$(gh api --paginate "repos/$repo/pulls?state=open&per_page=100" --jq ".[] | $fields")"
 cutoff="$(date -u -d "@$(($(date -u +%s) - window))" +%Y-%m-%dT%H:%M:%SZ)"
 recent_prs=""
@@ -39,7 +39,7 @@ prs="$(printf '%s\n%s\n' "$open_prs" "$recent_prs" | sed '/^$/d' | sort -u)"
 last=""
 last_pr=""
 waiting=()
-while read -r number state draft author sha; do
+while read -r number state draft author_type sha; do
   [ -n "$number" ] || continue
   # CodeRabbit's replies in review threads are also "reviews" (commented, empty body) but use
   # no allowance, so they are left out.
@@ -52,8 +52,9 @@ while read -r number state draft author sha; do
     last="$newest"
     last_pr="$number"
   fi
-  # Waiting: open, ready, a person's PR, and CodeRabbit hasn't reviewed its head commit.
-  if [ "$state" = open ] && [ "$draft" = false ] && [ "$author" != 'dependabot[bot]' ] &&
+  # Waiting: open, ready, a person's PR (CodeRabbit never reviews one a bot opened), and
+  # CodeRabbit hasn't reviewed its head commit.
+  if [ "$state" = open ] && [ "$draft" = false ] && [ "$author_type" != Bot ] &&
     ! printf '%s\n' "$reviews" | grep -q " $sha\$"; then
     waiting+=("$number")
   fi
