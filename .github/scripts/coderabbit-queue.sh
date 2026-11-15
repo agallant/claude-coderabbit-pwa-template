@@ -16,12 +16,23 @@ fi
 bot='coderabbitai[bot]'
 window=3600
 
-# Every open PR (the queue), plus the most recently updated ones of any state: a review from the
-# last hour is always on a PR that was updated in the last hour.
-fields='.[] | "\(.number) \(.state) \(.draft) \(.user.login) \(.head.sha)"'
-open_prs="$(gh api --paginate "repos/$repo/pulls?state=open&per_page=100" --jq "$fields")"
-recent_prs="$(gh api "repos/$repo/pulls?state=all&sort=updated&direction=desc&per_page=50" \
-  --jq "$fields")"
+# Every open PR (the queue), plus every PR of any state updated within the window: a review
+# from the last hour is always on a PR that was updated in the last hour.
+fields='"\(.number) \(.state) \(.draft) \(.user.login) \(.head.sha)"'
+open_prs="$(gh api --paginate "repos/$repo/pulls?state=open&per_page=100" --jq ".[] | $fields")"
+cutoff="$(date -u -d "@$(($(date -u +%s) - window))" +%Y-%m-%dT%H:%M:%SZ)"
+recent_prs=""
+page=1
+while :; do
+  rows="$(gh api "repos/$repo/pulls?state=all&sort=updated&direction=desc&per_page=100&page=$page" \
+    --jq ".[] | \"\(.updated_at) \" + $fields")"
+  fresh="$(printf '%s\n' "$rows" | awk -v c="$cutoff" '$1 >= c' | cut -d' ' -f2-)"
+  recent_prs="$(printf '%s\n%s' "$recent_prs" "$fresh")"
+  # Stop at the first page that is short or reaches PRs older than the window.
+  [ "$(printf '%s\n' "$rows" | sed '/^$/d' | wc -l)" -eq 100 ] || break
+  [ "$(printf '%s\n' "$fresh" | sed '/^$/d' | wc -l)" -eq 100 ] || break
+  page=$((page + 1))
+done
 prs="$(printf '%s\n%s\n' "$open_prs" "$recent_prs" | sed '/^$/d' | sort -u)"
 
 last=""
@@ -29,8 +40,12 @@ last_pr=""
 waiting=()
 while read -r number state draft author sha; do
   [ -n "$number" ] || continue
+  # CodeRabbit's replies in review threads are also "reviews" (commented, empty body) but use
+  # no allowance, so they are left out.
   reviews="$(gh api --paginate "repos/$repo/pulls/$number/reviews?per_page=100" \
-    --jq ".[] | select(.user.login==\"$bot\") | \"\(.submitted_at) \(.commit_id)\"")"
+    --jq ".[] | select(.user.login==\"$bot\")
+      | select(.state != \"COMMENTED\" or .body != \"\")
+      | \"\(.submitted_at) \(.commit_id)\"")"
   newest="$(printf '%s\n' "$reviews" | sort | tail -n 1 | cut -d' ' -f1)"
   if [ -n "$newest" ] && [[ "$newest" > "$last" ]]; then
     last="$newest"
@@ -45,7 +60,7 @@ done <<<"$prs"
 
 now="$(date -u +%s)"
 if [ -z "$last" ]; then
-  echo "Last CodeRabbit review: none found. A review is available now."
+  echo "No CodeRabbit review in the last hour or on an open PR. A review is available now."
 else
   next=$(($(date -u -d "$last" +%s) + window))
   if [ "$next" -le "$now" ]; then
