@@ -5,7 +5,8 @@
 #   .github/scripts/coderabbit-queue.sh [owner/repo]
 #
 # Prints when CodeRabbit last reviewed, when the next review is available, and which open PRs
-# are waiting for a review of their latest commit, in turn order. Read-only; needs `gh`.
+# are waiting for a review of their latest commit, in turn order. It only sees reviews that
+# have been posted: one still running shows up as its PR waiting. Read-only; needs `gh`.
 set -euo pipefail
 
 repo="${1:-}"
@@ -62,11 +63,13 @@ done <<<"$prs"
 
 now="$(date -u +%s)"
 if [ -z "$last" ]; then
-  echo "No CodeRabbit review in the last hour or on an open PR. A review is available now."
+  echo "No CodeRabbit review posted in the last hour or on an open PR. A review should be" \
+    "available now, unless one is still running on a PR listed below."
 else
   next=$(($(date -u -d "$last" +%s) + window))
   if [ "$next" -le "$now" ]; then
-    echo "Last CodeRabbit review: $last (#$last_pr). A review is available now."
+    echo "Last CodeRabbit review: $last (#$last_pr). A review should be available now," \
+      "unless one is still running on a PR listed below."
   else
     echo "Last CodeRabbit review: $last (#$last_pr). Next review available at" \
       "$(date -u -d "@$next" +%H:%M) UTC, in $(((next - now + 59) / 60)) min."
