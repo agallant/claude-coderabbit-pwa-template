@@ -90,9 +90,12 @@ Never ask the user for a token or to paste credentials; the workflow holds the o
   back up.
 - **Label what needs the owner.** When a PR can't move without the repo owner (a repo setting,
   a gate that seems wrong, a decision such as a breaking bump), add the `needs human` label and
-  comment on the PR with exactly what they need to do. Remove the label once that's done. Any
-  open PR without the label is in a Claude session's hands. If the repo has no such label yet,
-  create it:
+  comment on the PR with exactly what they need to do. If the question is whether the PR should
+  merge at all, also turn auto-merge off
+  (`gh api -X DELETE repos/<owner>/<repo>/pulls/<number>/ccr/auto_merge`) and turn it back on
+  only once they've decided; if it only waits on a setting, leave auto-merge on so it merges
+  when that's fixed. Remove the label once that's done. Any open PR without the label is in a
+  Claude session's hands. If the repo has no such label yet, create it:
   `gh api -X POST repos/<owner>/<repo>/labels -f name="needs human" -f color=d73a4a`.
 - **Dependabot PRs** never merge themselves. A daily run carries their bumps into a PR of its
   own; see "Dependabot PRs" below.
@@ -164,7 +167,9 @@ required checks and CodeRabbit's approval.
    doesn't match its tag. An undo can move the lockfile again, so repeat these checks after
    each one, until the branch passes them with nothing left to undo. For each bump you leave
    out, say why in a comment on its Dependabot PR, add the `needs human` label to it, and tell
-   the user. If every bump was left out, there is nothing to open a PR for: stop here.
+   the user. Skip that for a PR you already reported for the same version and the same reason:
+   the owner may have removed the label to put it off. If every bump was left out, there is
+   nothing to open a PR for: stop here.
 
 5. Run `.github/scripts/coderabbit-queue.sh`. CodeRabbit allows about one review an hour,
    shared with every other session working in the repo. If the hour isn't up, or an open PR is
