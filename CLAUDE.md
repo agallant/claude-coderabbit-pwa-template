@@ -94,8 +94,9 @@ Never ask the user for a token or to paste credentials; the workflow holds the o
   merge at all, also turn auto-merge off
   (`gh api -X DELETE repos/<owner>/<repo>/pulls/<number>/ccr/auto_merge`) and turn it back on
   only if they decide it should merge; if they decide it shouldn't, close it. If it only waits
-  on a setting, leave auto-merge on so it merges when that's fixed. Remove the label once that's done. Any open PR without the label is in a
-  Claude session's hands. If the repo has no such label yet, create it:
+  on a setting, leave auto-merge on so it merges when that's fixed. Remove the label once
+  that's done. Any open PR without the label is in a Claude session's hands. If the repo has
+  no such label yet, create it:
   `gh api -X POST repos/<owner>/<repo>/labels -f name="needs human" -f color=d73a4a`.
 - **Dependabot PRs** never merge themselves. A daily run carries their bumps into a PR of its
   own; see "Dependabot PRs" below.
@@ -167,11 +168,11 @@ required checks and CodeRabbit's approval.
    doesn't match its tag. An undo can move the lockfile again, so repeat these checks after
    each one, until the branch passes them with nothing left to undo. For each bump you leave
    out, say why in a comment on its Dependabot PR, add the `needs human` label to it, and tell
-   the user. Skip that for a PR you already reported for the same version and the same reason
-   (the owner may have removed the label to put it off), unless its comments show the owner
-   has since fixed that cause and it came back. If the branch has no change against `main`,
-   because every bump was left out or is already there, there is nothing to open a PR for:
-   stop here.
+   the user. Skip that for a package you already reported on that PR for the same version and
+   the same reason (the owner may have removed the label to put it off), unless its comments
+   show the owner has since fixed that cause and it came back. If the branch has no change
+   against `main`, because every bump was left out or is already there, there is nothing to
+   open a PR for: stop here.
 
 5. Run `.github/scripts/coderabbit-queue.sh`. CodeRabbit allows about one review an hour,
    shared with every other session working in the repo. If the hour isn't up, or an open PR is
