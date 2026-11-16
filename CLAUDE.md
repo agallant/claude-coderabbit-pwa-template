@@ -71,7 +71,8 @@ Never ask the user for a token or to paste credentials; the workflow holds the o
   shares it (other Claude sessions and the daily Dependabot run included). Take turns:
   - Run `.github/scripts/coderabbit-queue.sh` before you open a PR, push to one, or comment
     `@coderabbitai review`. It prints when the next review is available and which open PRs are
-    waiting for one, in turn order: lowest number first, whatever kind of PR it is.
+    waiting for one, in turn order: lowest number first. Drafts and PRs opened by bots aren't
+    in the list, because CodeRabbit doesn't review them.
   - If the hour isn't up, or a PR ahead of yours is waiting, don't push or request a review:
     schedule your check-in for when your turn comes (the next slot, plus an hour for each PR
     ahead of yours) and carry on with other work on a branch that has no PR yet.
@@ -137,12 +138,28 @@ required checks and CodeRabbit's approval.
    end, as for any PR. Don't open a second one until it has merged or been closed.
 2. List the open PRs by `dependabot[bot]`. If there are none, stop.
 3. On one new branch from `main`, make each bump yourself:
-   - **Packages**: install the target version with the package manager, so the lockfile is
-     regenerated here and not copied.
+   - **Packages**: for a dependency listed in `package.json`, install the target version with
+     the package manager, so the lockfile is regenerated here and not copied. For one that is
+     only in the lockfile (a dependency of a dependency), update it in place with
+     `npm update <name>` or the package manager's equivalent, and don't add it to
+     `package.json`.
    - **Actions**: edit the `uses:` pin to the commit and version comment in Dependabot's diff.
-4. Run the `package.json` scripts CI runs. If a bump breaks them (usually a major version), fix
-   the code in the same PR when the fix is small. Otherwise leave that bump out, say why in a
-   comment on its Dependabot PR, and tell the user.
+     First confirm that commit is what the version tag points to in the action's own repo
+     (`git ls-remote https://github.com/<owner>/<repo> 'refs/tags/<version>*'`; for an
+     annotated tag, the commit is on the line ending `^{}`).
+4. Check the branch once every bump is in:
+   - Every package you bumped is at Dependabot's target version in the final lockfile. An
+     in-place update can pick a newer version, and a later install can move an earlier bump.
+   - `package.json` has no dependency that wasn't there before.
+   - The `package.json` scripts CI runs all pass. If a bump breaks them (usually a major
+     version), fix the code in the same PR when the fix is small.
+
+   Undo any bump that fails a check and that you can't put right, and any action whose pin
+   doesn't match its tag. An undo can move the lockfile again, so repeat these checks after
+   each one, until the branch passes them with nothing left to undo. For each bump you leave
+   out, say why in a comment on its Dependabot PR and tell the user. If every bump was left
+   out, there is nothing to open a PR for: stop here.
+
 5. Run `.github/scripts/coderabbit-queue.sh`. CodeRabbit allows about one review an hour,
    shared with every other session working in the repo. If the hour isn't up, or an open PR is
    already waiting for a review, schedule a check-in for when the turn comes and stop here; the
@@ -157,8 +174,9 @@ required checks and CodeRabbit's approval.
    reviewed the PR's latest commit: if it said the review limit was reached, wait the time it
    states first, and if it hasn't answered the command after ten minutes, post it again.
 7. Comment on each Dependabot PR you copied with a link to yours, and leave it open: Dependabot
-   closes it by itself once `main` has the new version. Close any that are still open after
-   your PR merges.
+   closes it by itself once `main` has every version in it. After your PR merges, close any
+   that are still open and fully copied. Leave open one you copied only part of (a grouped PR
+   with a bump you left out), with a comment naming the bumps that remain.
 8. Only message the user when something needs them, such as a breaking bump you couldn't fix or a
    gate that seems wrong.
 
